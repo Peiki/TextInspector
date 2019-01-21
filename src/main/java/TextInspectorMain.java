@@ -46,7 +46,7 @@ public class TextInspectorMain {
         File file = new File(filename);
         do{
             if (file.exists()) {
-                choice = JOptionPane.showConfirmDialog(null, "Il file esiste già, scovrascriverlo?");
+                choice = JOptionPane.showConfirmDialog(null, "Il file esiste già, sovrascriverlo?");
             }
             else{
                 choice=0;
@@ -94,28 +94,31 @@ public class TextInspectorMain {
                 String parts[]=content.split("\\s+");
 
                 for(int h=0;h<parts.length;h++) {
-                    addWord(parts[h],words,occurrencies);
+                    addWord(removeSpecialCharacters(parts[h]),words,occurrencies);
                     countWords++;
                 }
-
             }
 
-            //TODO remove useless characters from words (occhio che non rimanga vuota)
-            //TODO words, occurrencies DA ORDINARE
-            //TODO inserisci i dati nel file
+            orderAll(words,occurrencies);
+
+            //TODO ordine anche per parola
 
             bw.write("Numero di parole: "+Integer.toString(countWords));
             bw.newLine();
             bw.write("Numero di caratteri: "+Integer.toString(countChars));
             bw.newLine();
             bw.newLine();
-            bw.write("Occorrenza delle parole:");
+            bw.write("Occorrenza delle parole: [num - word]");
             bw.newLine();
 
-            JOptionPane.showMessageDialog(null,"Processo Completato!");
+            for(int c=0;c<words.size();c++){
+                bw.write(occurrencies.get(c)+" - "+words.get(c));
+                bw.newLine();
+            }
 
             bw.flush();
             bw.close();
+            JOptionPane.showMessageDialog(null,"Processo Completato!");
         }catch(IOException e){
             JOptionPane.showMessageDialog(null,"Errore Fatale");
         }
@@ -124,8 +127,10 @@ public class TextInspectorMain {
     private static void addWord(String word, List<String> words, List<Integer> occurrencies){
         int wordPosition=findWord(word,words);
         if(wordPosition==-1){
-            words.add(word);
-            occurrencies.add(1);
+            if(!word.equals("")){
+                words.add(word);
+                occurrencies.add(1);
+            }
         }
         else{
             occurrencies.set(wordPosition,occurrencies.get(wordPosition)+1);
@@ -134,15 +139,41 @@ public class TextInspectorMain {
 
     private static int findWord(String word, List<String> words){
         for(int i=0;i<words.size();i++) {
-            if (words.get(i) == word) {
+            if (words.get(i).equals(word)) {
                 return i;
             }
         }
-            return -1;
+        return -1;
+    }
+
+    private static String removeSpecialCharacters(String word){
+        String newWord="";
+        for(int i=0;i<word.length();i++){
+            if(Character.isLetter(word.charAt(i)) || Character.isDigit(word.charAt(i)))
+                newWord+=word.charAt(i);
+        }
+        return newWord;
     }
 
     private static void emptyArray(char[] array){
         for(int i=0;i<array.length;i++)
             array[i]='£';
+    }
+
+    private static void orderAll(List<String> words, List<Integer> occurrencies){
+        int key,i;
+        String keyString;
+        for(int j=1;j<words.size();j++){
+            key=occurrencies.get(j);
+            keyString=words.get(j);
+            i=j-1;
+            while(i>=0 && occurrencies.get(i)<key){
+                occurrencies.set(i+1,occurrencies.get(i));
+                words.set(i+1,words.get(i));
+                i=i-1;
+            }
+            occurrencies.set(i+1,key);
+            words.set(i+1,keyString);
+        }
     }
 }
